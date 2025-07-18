@@ -1,6 +1,6 @@
 # Email Sender App
-This is an email sender app built using PyQt6 and python.
-It allows user to send email to multiple recipients with options to send individually or to all of them at once.
+This is an email sender app built using PyQt6 and Python.
+It allows users to send email to multiple recipients with options to send individually or to all of them at once.
 
 ## Features
 - Login checking SMTP connection
@@ -10,15 +10,16 @@ It allows user to send email to multiple recipients with options to send individ
 
 ## Installation
 1. Clone this repository:
-   '''bash
+   ```bash
    git clone https://github.com/BowennZhou/email-sender-app.git
+   ```
 
 2. Install the dependencies:
-   '''bash
+   ```bash
    pip install -r requirements.txt
-   '''
+   ```
      
 3. Run the app:
-   '''bash
+   ```bash
    python main.py
-   '''
+   ```
