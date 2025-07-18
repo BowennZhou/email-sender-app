@@ -57,22 +57,41 @@ class MainWindow(QMainWindow):
 
     def send_email(self, subject, body_html, recipients_string, image_paths=None):
         recipients = [email.strip() for email in recipients_string.split(",")]
-        try:
-            send_email_smtp(
-                self.smtp_host,
-                self.smtp_port,
-                self.use_ssl,
-                self.sender_email,
-                self.app_password,
-                recipients,
-                subject,
-                body_html,
-                image_paths if image_paths else None
-            )
-            QMessageBox.information(self, "Sent", "Email has been sent!")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to send email:\n{e}")
 
+        if self.composer.individual_checkbox.isChecked():
+            for recipient in recipients:
+                try:
+                    send_email_smtp(
+                        self.smtp_host,
+                        self.smtp_port,
+                        self.use_ssl,
+                        self.sender_email,
+                        self.app_password,
+                        [recipient],
+                        subject,
+                        body_html,
+                        image_paths if image_paths else None
+                    )
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"Failed to send email Individually: \n{e}")
+                    return;
+            QMessageBox.information(self, "Sent", "Emails have been sent individually")
+        else:
+            try:
+                send_email_smtp(
+                    self.smtp_host,
+                    self.smtp_port,
+                    self.use_ssl,
+                    self.sender_email,
+                    self.app_password,
+                    recipients,
+                    subject,
+                    body_html,
+                    image_paths if image_paths else None
+                )
+                QMessageBox.information(self, "Sent", "Emails have been sent to ALL")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to send email to ALL: \n{e}")
 
 
 if __name__ == "__main__":

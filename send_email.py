@@ -14,7 +14,7 @@ def send_email_smtp(smtp_host, smtp_port, use_ssl, sender, password, recipients,
     msg_root.attach(msg_alternative)
     msg_alternative.attach(MIMEText(body_html, 'html'))
 
-    # Attach images as inline
+    # Attach images as inline if any
     if image_paths:
         for idx, img_path in enumerate(image_paths):
             if not os.path.isfile(img_path):
