@@ -1,10 +1,12 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView,
-    QPushButton, QHBoxLayout, QLineEdit, QMessageBox
+    QPushButton, QHBoxLayout, QLineEdit, QMessageBox, QDialog
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 import os
 import json
+
+from add_dialog import AddDialog
 
 save_dir = os.path.join(os.path.expanduser("~"), "Documents", "EmailSenderApp")
 os.makedirs(save_dir, exist_ok=True)
@@ -20,6 +22,7 @@ class EmailManager(QWidget):
         self.setWindowTitle("Manage Emails")
         #self.emails = ["jingliu309@gmail.com", "yongzhou2022@gmail.com", "owenzh516@gmail.com", "mannarabella16@gmail.com"]
 
+        # Load with names and emails
         self.emails = self.load_emails()
 
         # Layout
@@ -27,8 +30,8 @@ class EmailManager(QWidget):
         self.setLayout(layout)
 
         # Table
-        self.table = QTableWidget(0, 2)
-        self.table.setHorizontalHeaderLabels(["Select", "Email Address"])
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["Select", "Name", "Email Address"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(self.table)
 
@@ -37,18 +40,19 @@ class EmailManager(QWidget):
 
         # Controls
         hlayout = QHBoxLayout()
-        self.add_input = QLineEdit()
-        self.add_input.setPlaceholderText("Add New Email")
-        hlayout.addWidget(self.add_input)
+
         self.add_btn = QPushButton("Add")
         self.add_btn.clicked.connect(self.add_email)
         hlayout.addWidget(self.add_btn)
+
         self.del_btn = QPushButton("Delete Selected")
         self.del_btn.clicked.connect(self.delete_selected)
         hlayout.addWidget(self.del_btn)
+
         self.check_all_btn = QPushButton("Check All")
         self.check_all_btn.clicked.connect(self.check_all)
         hlayout.addWidget(self.check_all_btn)
+
         self.uncheck_all_btn = QPushButton("Uncheck All")
         self.uncheck_all_btn.clicked.connect(self.uncheck_all)
         hlayout.addWidget(self.uncheck_all_btn)
@@ -61,26 +65,31 @@ class EmailManager(QWidget):
 
     def refresh_table(self):
         self.table.setRowCount(0)
-        for email in self.emails:
+        for email_data in self.emails:
             row = self.table.rowCount()
             self.table.insertRow(row)
+
             item = QTableWidgetItem()
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             item.setCheckState(Qt.CheckState.Unchecked)
             self.table.setItem(row, 0, item)
-            self.table.setItem(row, 1, QTableWidgetItem(email))
+            self.table.setItem(row, 1, QTableWidgetItem(email_data["name"]))
+            self.table.setItem(row, 2, QTableWidgetItem(email_data["email"]))
 
     def add_email(self):
-        email = self.add_input.text().strip()
-        if not email:
-            return
-        if email in self.emails:
-            QMessageBox.warning(self, "Duplicate", "This email is already in the list.")
-            return
-        self.emails.append(email)
-        self.save_emails()
-        self.refresh_table()
-        self.add_input.clear()
+        dialog = AddDialog()
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            name, email = dialog.get_input_data()
+            if name and email:
+                if any(email == e["email"] for e in self.emails):
+                    QMessageBox.warning(self, "Duplicate", "Email Already Exists")
+                    return
+                self.emails.append({"name": name, "email": email})
+                self.save_emails()
+                self.refresh_table()
+            else:
+                QMessageBox.warning(self, "Error", "Fill out both name and email")
+
 
     def delete_selected(self):
         rows_to_delete = []
@@ -103,7 +112,7 @@ class EmailManager(QWidget):
         for i in range(self.table.rowCount()):
             item = self.table.item(i, 0)
             if item.checkState() == Qt.CheckState.Checked:
-                selected.append(self.emails[i])
+                selected.append(self.emails[i]["email"])
 
         if not selected:
             QMessageBox.warning(self, "No Recipients", "Select at least one recipient.")
@@ -119,7 +128,8 @@ class EmailManager(QWidget):
         if os.path.exists(EMAILS_FILE):
             try:
                 with open(EMAILS_FILE, "r") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    return [{"name": email["name"], "email": email["email"]} for email in data]
             except Exception as e:
                 print(f"Can't load emails file: {e}")
                 return []
